@@ -1,11 +1,36 @@
-import React, { useEffect } from 'react'
+import React, { useCallback, useEffect } from 'react'
+import { withSocket } from './webSocket'
+// import io from 'socket.io-client'
 
-function App() {
+// const socket  =  io( '/webrtcPeer')
+
+function App({socket}) {
   const localVideoRef = React.createRef();
   const remoteVideoRef = React.createRef();
   let textref = React.useRef(null);
   const [textValue,setTextValue] = React.useState('')
   let pc = null;
+  // let socket = null;
+  useEffect(()=>{
+    socket.on(  '/webrtcPeer',
+    {
+        path:'htt/webrtc',
+        query:{}
+      },()=>{
+    })
+    return () => {
+      socket.off('')
+    }
+  })
+  // useEffect(()=>{
+  //   socket = io(
+  //     '/webrtcPeer',
+  //     {
+  //         path:'/webrtc',
+  //         query:{}
+  //       }
+  //   )
+  // },[])
 
   useEffect(() => {
     const pc_config = null
@@ -14,6 +39,17 @@ function App() {
     pc.onicecandidate = (e) =>{
       if(e.candidate) console.log(JSON.stringify(e.candidate))
     }
+   
+
+   
+    // socket = io(
+    //     '/webrtcPeer',
+    //     {
+    //       path:'/webrtc',
+    //       query:{}
+    //     }
+    //   )
+    
 
     pc.oniceconnectionstatechange = (e) =>{
       console.log(e)
@@ -98,4 +134,4 @@ function App() {
   );
 }
 
-export default App;
+export default withSocket(App);
