@@ -4,7 +4,7 @@ import Socket from "socket.io-client";
 // import { STRAPI_DEVELOPMENT, STRAPI_PRODUCTION } from "../../constants/Api";
 
 const socket = Socket(
-    'http://localhost:8080',
+    '',
 );
 
 export const withSocket = (Component) => {
