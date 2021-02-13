@@ -59,6 +59,25 @@ function App({ socket }) {
       remoteVideoRef.current.srcObject = e.streams[0]
     }
 
+    // navigator.mediaDevices
+    //   .getUserMedia({
+    //     video: true, audio: {
+    //       echoCancellation: true,
+    //       noiseSuppression: true,
+    //       autoGainControl: true,
+    //     }
+    //   })
+    //   .then(stream => {
+    //     localVideoRef.current.srcObject = stream;
+    //     console.log("checl")
+    //     pc.addStream(stream)
+    //   })
+    //   .catch(console.log);
+
+  }, [])
+
+  const createOffer = () => {
+    console.log("offer")
     navigator.mediaDevices
       .getUserMedia({
         video: true, audio: {
@@ -69,18 +88,16 @@ function App({ socket }) {
       })
       .then(stream => {
         localVideoRef.current.srcObject = stream;
+        console.log("checl")
         pc.addStream(stream)
+        pc.createOffer({ offerToReceiveVideo: 1 }).then(sdp => {
+          console.log(JSON.stringify(sdp));
+          pc.setLocalDescription(sdp)
+          sendToPeer('offerOrAnswer', sdp)
+        }, e => { });
       })
       .catch(console.log);
-  }, [])
-
-  const createOffer = () => {
-    console.log("offer")
-    pc.createOffer({ offerToReceiveVideo: 1 }).then(sdp => {
-      console.log(JSON.stringify(sdp));
-      pc.setLocalDescription(sdp)
-      sendToPeer('offerOrAnswer', sdp)
-    }, e => { });
+   
   }
 
   const setRemoteDescription = () => {
@@ -92,11 +109,26 @@ function App({ socket }) {
 
   const createAnswer = () => {
     console.log("Answer");
-    pc.createAnswer({ offerToReceiveVideo: 1 }).then(sdp => {
-      console.log(JSON.stringify(sdp));
-      pc.setLocalDescription(sdp)
-      sendToPeer('offerOrAnswer', sdp)
-    }, e => { })
+    navigator.mediaDevices
+    .getUserMedia({
+      video: true, audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      }
+    })
+    .then(stream => {
+      localVideoRef.current.srcObject = stream;
+      console.log("checl")
+      pc.addStream(stream)
+      pc.createAnswer({ offerToReceiveVideo: 1 }).then(sdp => {
+        console.log(JSON.stringify(sdp));
+        pc.setLocalDescription(sdp)
+        sendToPeer('offerOrAnswer', sdp)
+      }, e => { })
+    })
+    .catch(console.log);
+ 
   }
 
   const addCandidate = () => {
@@ -108,6 +140,45 @@ function App({ socket }) {
       pc.addIceCandidate(new RTCIceCandidate(candidate))
     })
     // if(candidate) pc.addIceCandidate(new RTCIceCandidate(candidate));
+  }
+
+  const openVideo = () => {
+    // localVideoRef.stop();
+    localVideoRef.current.srcObject?.getTracks().forEach(track => track.stop())
+    navigator.mediaDevices
+      .getUserMedia({
+        video: true, audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        }
+      })
+      .then(stream => {
+        localVideoRef.current.srcObject = stream;
+        console.log("checl")
+        pc.addStream(stream)
+      })
+      .catch(console.log);
+  }
+
+  const shareScreen = () => {
+    localVideoRef.current.srcObject?.getTracks()?.forEach(track => track.stop())
+    navigator.mediaDevices
+      .getDisplayMedia()
+      .then(stream => {
+        localVideoRef.current.srcObject = stream;
+        console.log("checl",localVideoRef.current.srcObject)
+        stream.getVideoTracks()[0].addEventListener('ended', () => {
+          localVideoRef.current.srcObject = null
+        });
+    
+        pc.addStream(stream)
+      })
+      .catch(console.log());
+  }
+
+  const callEnd = () =>{
+    pc.close();
   }
   // const [constraints,setConstraints] = React.useState( {video: true})
   // const constraints = {video: true}  
@@ -142,6 +213,9 @@ function App({ socket }) {
       <br />
       <button onClick={setRemoteDescription}>Set Remote Desc</button>
       <button onClick={addCandidate}>Add candidate</button>
+      <button onClick={openVideo}>open video</button>
+      <button onClick={shareScreen}>Share screen</button>
+      <button onClick={callEnd}>End Call</button>
     </div>
   );
 }
